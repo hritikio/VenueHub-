@@ -2,10 +2,10 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const Venue = require("../Models/venue");
 
-const url = "https://www.venuelook.com/pune?page=1";
-async function scrapePage() {
+async function scrapePage(page) {
   try {
-    const response = await axios.get(url, {
+    console.log(`Scraping page ${page}...`);
+    const response = await axios.get(`https://www.venuelook.com/pune?page=${page}`, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/136.0.0.0 Safari/537.36",
@@ -72,9 +72,10 @@ async function scrapePage() {
         venueUrl,
       });
     });
+    console.log(`Found ${venues.length} venues on page ${page}`);
 
-    console.log(venues);
-    console.log(venues.length);
+    // console.log(venues);
+    // console.log(venues.length);
 
     for (const venue of venues) {
       await Venue.findOneAndUpdate(
@@ -83,18 +84,35 @@ async function scrapePage() {
         },
         venue,
         {
-          upsert: true,
+          upsert: true, // this means it will create a new document if no document matches the filter
           returnDocument: "after", // this means it will return the updated document after the update is applied
         },
       );
     }
-    console.log("Page scraped and data stored successfully"); 
+    console.log(`Page ${page} scraped and data stored successfully`); 
+     console.log(`Saved ${venues.length} venues of page ${page} to the database`);
 
     
   } catch (e) {
     console.error(e);
-    console.log("Error scraping the page");
+    console.log("Error scraping for page",page);
   }
 }
 
-module.exports=scrapePage
+async function scrapeAllPages(){
+    for (let page=1;page<=2;page++){
+      //total 65 pages to scrape lets do 5-10 for now 
+        await scrapePage(page);
+
+        await new Promise(resolve=>{
+            setTimeout(()=>{
+                resolve("Delay between page scrapes for 10 sec");
+            },10000)
+        })
+        console.log(`Finished scraping page ${page}, moving to next page and delayed 10 sec...`);
+    }
+
+    console.log("Finished scraping all pages!");
+}
+
+module.exports=scrapeAllPages;
