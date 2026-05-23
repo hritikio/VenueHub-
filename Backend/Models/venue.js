@@ -19,13 +19,15 @@ const venueSchema = new mongoose.Schema(
       min: 0,
       max: 5,
     },
+    halfDayRental: Number,
 
+    fullDayRental: Number,
 
-    reviewCount:Number,
+    reviewCount: Number,
 
     capacity: {
       type: String,
-     
+
       required: true,
     },
 

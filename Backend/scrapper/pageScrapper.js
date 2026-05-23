@@ -5,16 +5,19 @@ const Venue = require("../Models/venue");
 async function scrapePage(page) {
   try {
     console.log(`Scraping page ${page}...`);
-    const response = await axios.get(`https://www.venuelook.com/pune?page=${page}`, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/136.0.0.0 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
+    const response = await axios.get(
+      `https://www.venuelook.com/pune?page=${page}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/136.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        timeout: 60000,
       },
-      timeout: 60000,
-    });
+    );
     const data = response.data;
     // console.log(data);
 
@@ -60,6 +63,18 @@ async function scrapePage(page) {
 
       const venueUrl = href ? "https://www.venuelook.com" + href : "";
 
+      const rentalElements = $(card).find(".search_gridviewDishsecond1__D_cAu");
+
+      const halfDayRental =
+        rentalElements.length > 0
+          ? Number($(rentalElements[0]).text().replace(/\D/g, ""))
+          : 0;
+
+      const fullDayRental =
+        rentalElements.length > 1
+          ? Number($(rentalElements[1]).text().replace(/\D/g, ""))
+          : 0;
+
       venues.push({
         name,
         capacity,
@@ -67,6 +82,8 @@ async function scrapePage(page) {
         reviewCount,
         vegPrice,
         nonVegPrice,
+        halfDayRental,
+        fullDayRental,
         location,
         image,
         venueUrl,
@@ -89,30 +106,32 @@ async function scrapePage(page) {
         },
       );
     }
-    console.log(`Page ${page} scraped and data stored successfully`); 
-     console.log(`Saved ${venues.length} venues of page ${page} to the database`);
-
-    
+    console.log(`Page ${page} scraped and data stored successfully`);
+    console.log(
+      `Saved ${venues.length} venues of page ${page} to the database`,
+    );
   } catch (e) {
     console.error(e);
-    console.log("Error scraping for page",page);
+    console.log("Error scraping for page", page);
   }
 }
 
-async function scrapeAllPages(){
-    for (let page=1;page<=2;page++){
-      //total 65 pages to scrape lets do 5-10 for now 
-        await scrapePage(page);
+async function scrapeAllPages() {
+  for (let page = 1; page <= 3; page++) {
+    //total 65 pages to scrape lets do 5-10 for now
+    await scrapePage(page);
 
-        await new Promise(resolve=>{
-            setTimeout(()=>{
-                resolve("Delay between page scrapes for 10 sec");
-            },10000)
-        })
-        console.log(`Finished scraping page ${page}, moving to next page and delayed 10 sec...`);
-    }
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("Delay between page scrapes for 10 sec");
+      }, 3000);
+    });
+    console.log(
+      `Finished scraping page ${page}, moving to next page and delayed 10 sec...`,
+    );
+  }
 
-    console.log("Finished scraping all pages!");
+  console.log("Finished scraping all pages!");
 }
 
-module.exports=scrapeAllPages;
+module.exports = scrapeAllPages;
